@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+np.random.seed(1)
 
-# read data
-# data class
+
 class Dataset:
     def __init__(self, path, classes: int):
         raw_data = np.loadtxt(path, dtype=np.float, delimiter=' ')
@@ -110,36 +110,28 @@ class Model:
         return result + 1
 
 
-np.random.seed(1)
-# validation
-config = {'path': 'Dataset/2Hcircle1.txt',
-          'classes': 2,
-          'learning_rate': 0.8,
-          'check_size': 30,
-          'epoch': 300}
+# TODO: pack this into a function
+def train_model(config: dict):
+    dataset = Dataset(config['path'], config['classes'])
+    perceptron = Model(dataset.feature, config['classes'], config['learning_rate'])
+    min_error = 10000
+    check_count = 0
+    for n in range(config['epoch']):
+        np.random.shuffle(dataset.training_dataset)
+        for training_data in dataset.training_dataset:
+            perceptron.update(training_data)
 
-
-# training
-dataset = Dataset(config['path'], config['classes'])
-perceptron = Model(dataset.feature, config['classes'], config['learning_rate'])
-min_error = 10000
-check_count = 0
-for n in range(config['epoch']):
-    np.random.shuffle(dataset.training_dataset)
-    for training_data in dataset.training_dataset:
-        perceptron.update(training_data)
-
-        # check if model is better
-        if check_count == config['check_size']:
-            tmp_error = 0
-            for validation_data in dataset.validation_dataset:
-                if perceptron.predict(validation_data) != validation_data[-1]:
-                    tmp_error = tmp_error + 1
-            if tmp_error < min_error:
-                min_error = tmp_error
-                perceptron.best_neuron_list = perceptron.neuron_list.copy()
-            check_count = 0
-        else:
-            check_count = check_count + 1
-print(perceptron.best_neuron_list[0])
-get_data_distribution_map_and_line(config['path'], perceptron.best_neuron_list[0])
+            # check if model is better
+            if check_count == config['check_packet_frequency']:
+                tmp_error = 0
+                for validation_data in dataset.validation_dataset:
+                    if perceptron.predict(validation_data) != validation_data[-1]:
+                        tmp_error = tmp_error + 1
+                if tmp_error < min_error:
+                    min_error = tmp_error
+                    perceptron.best_neuron_list = perceptron.neuron_list.copy()
+                check_count = 0
+            else:
+                check_count = check_count + 1
+    print(perceptron.best_neuron_list[0])
+    get_data_distribution_map_and_line(config['path'], perceptron.best_neuron_list[0])

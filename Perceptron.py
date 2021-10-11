@@ -1,7 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-
-np.random.seed(1)
 
 
 class Dataset:
@@ -14,38 +11,6 @@ class Dataset:
         # print(training_data_size)
         self.training_dataset = raw_data[:training_data_size]
         self.validation_dataset = raw_data[training_data_size:]
-
-
-def get_data_distribution_map_and_line(path, weight: list):
-    data_all = np.loadtxt(path, dtype=np.float, delimiter=' ')
-    # data distribution scatter
-    x_1 = list()
-    x_2 = list()
-    y_1 = list()
-    y_2 = list()
-    for d in data_all:
-        if d[2] == 1:
-            x_1.append(d[0])
-            y_1.append(d[1])
-        elif d[2] == 2:
-            x_2.append(d[0])
-            y_2.append(d[1])
-    plt.scatter(x_1, y_1, c='red', s=5)
-    plt.scatter(x_2, y_2, c='green', s=5)
-    # model prediction line
-    x1_min = np.amin(data_all, axis=0)[0]
-    x1_max = np.amax(data_all, axis=0)[0]
-    x = np.arange(x1_min, x1_max, 0.1)
-    # the divide line
-    y = -(-weight[0] + weight[1] * x) / weight[2]
-    plt.plot(x, y, c='purple')
-    # other setting
-    plt.axhline(y=0)
-    plt.axvline(x=0)
-    plt.xlabel('x1')
-    plt.ylabel('x2')
-    plt.title('Data Distribution Map')
-    plt.show()
 
 
 def get_class(type_index: int, output_dim):
@@ -110,17 +75,14 @@ class Model:
         return result + 1
 
 
-# TODO: pack this into a function
-def train_model(config: dict):
-    dataset = Dataset(config['path'], config['classes'])
-    perceptron = Model(dataset.feature, config['classes'], config['learning_rate'])
+# TODO: check error rate
+def train_model(config: dict, dataset: Dataset, perceptron: Model):
     min_error = 10000
     check_count = 0
     for n in range(config['epoch']):
         np.random.shuffle(dataset.training_dataset)
         for training_data in dataset.training_dataset:
             perceptron.update(training_data)
-
             # check if model is better
             if check_count == config['check_packet_frequency']:
                 tmp_error = 0
@@ -133,5 +95,4 @@ def train_model(config: dict):
                 check_count = 0
             else:
                 check_count = check_count + 1
-    print(perceptron.best_neuron_list[0])
-    get_data_distribution_map_and_line(config['path'], perceptron.best_neuron_list[0])
+    return perceptron

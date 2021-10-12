@@ -8,7 +8,7 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 
 # -------------------------- functions --------------------------
 def get_configure_and_run():
-    get_configure()
+    # get_configure()
     dataset = Perceptron.Dataset(config['path'], config['classes'])
     my_model = Perceptron.Model(dataset.feature, config['classes'], config['learning_rate'])
     my_model = Perceptron.train_model(config, dataset, my_model)
@@ -17,9 +17,9 @@ def get_configure_and_run():
             (dataset.training_dataset, dataset.validation_dataset), axis=0),
             1, data_only=True)
         get_data_distribution_map_and_prediction_line(dataset.training_dataset,
-                                                      1, False, my_model.best_neuron_list[0])
+                                                      2, False, my_model.best_neuron_list[0])
         get_data_distribution_map_and_prediction_line(dataset.validation_dataset,
-                                                      1, False, my_model.best_neuron_list[0])
+                                                      3, False, my_model.best_neuron_list[0])
 
 
 def get_configure():
@@ -43,7 +43,19 @@ def get_configure():
 def get_data_distribution_map_and_prediction_line(dataset: 'np.ndarray', position: int, data_only=True,
                                                   weight: list = None):
     """draw figure and show it on window"""
-    fig = Figure(figsize=(3, 2.5), dpi=100)
+    if position == 1:
+        fig = fig1
+        canvas = canvas1
+    elif position == 2:
+        fig = fig2
+        canvas = canvas2
+    else:
+        fig = fig3
+        canvas = canvas3
+
+    # for item in canvas.get_tk_widget().find_all():
+    #     canvas.get_tk_widget().delete(item)
+    fig.clear()
     plot1 = fig.add_subplot(111)
     x_1, y_1, x_2, y_2 = separate_data_by_class(dataset)
     plot1.scatter(x_1, y_1, c='red', s=5)
@@ -55,18 +67,20 @@ def get_data_distribution_map_and_prediction_line(dataset: 'np.ndarray', positio
     # other setting
     plot1.axhline(y=0)
     plot1.axvline(x=0)
-    if position == 1:
-        canvas = FigureCanvasTkAgg(fig, master=middle_up)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.TOP, fill='y')
-    elif position == 2:
-        canvas = FigureCanvasTkAgg(fig, master=middle_middle)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.TOP, fill='y')
-    else:
-        canvas = FigureCanvasTkAgg(fig, master=middle_down)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.TOP, fill='y')
+    canvas.draw()
+    canvas.get_tk_widget().pack()
+    # if position == 1:
+    #     # canvas = FigureCanvasTkAgg(fig, master=middle_up)
+    #     canvas1.draw()
+    #     canvas1.get_tk_widget().pack(side=tk.TOP, fill='y')
+    # elif position == 2:
+    #     # canvas = FigureCanvasTkAgg(fig, master=middle_middle)
+    #     canvas2.draw()
+    #     canvas2.get_tk_widget().pack(side=tk.TOP, fill='y')
+    # else:
+    #     # canvas = FigureCanvasTkAgg(fig, master=middle_down)
+    #     canvas3.draw()
+    #     canvas3.get_tk_widget().pack(side=tk.TOP, fill='y')
 
     # toolbar = NavigationToolbar2Tk(canvas, right_part)
     # toolbar.update()
@@ -107,7 +121,7 @@ config = {'path': 'Dataset/2Hcircle1.txt',
           'learning_rate': 0.8,
           'check_packet_frequency': 30,
           'epoch': 600,
-          'error_rate': 0.1}
+          'error_rate': 0.01}
 # --------------------------- GUI --------------------------------
 window = tk.Tk()
 window.title('Have Fun with Perceptron')
@@ -173,5 +187,19 @@ error_message.pack()
 run_btn = tk.Button(left_part, text='run', command=get_configure_and_run)
 run_btn.pack()
 # --------------------------------------------------------------------
+fig1 = Figure(figsize=(3, 2.5), dpi=100)
+fig2 = Figure(figsize=(3, 2.5), dpi=100)
+fig3 = Figure(figsize=(3, 2.5), dpi=100)
+canvas1 = FigureCanvasTkAgg(fig1, master=middle_up)
+canvas1.draw()
+canvas1.get_tk_widget().pack(side=tk.TOP, fill='y')
+canvas2 = FigureCanvasTkAgg(fig2, master=middle_middle)
+canvas2.draw()
+canvas2.get_tk_widget().pack(side=tk.TOP, fill='y')
+canvas3 = FigureCanvasTkAgg(fig3, master=middle_down)
+canvas3.draw()
+canvas3.get_tk_widget().pack(side=tk.TOP, fill='y')
+# ---------------------------------------------------------------------
+
 # TODO: 顯示訓練結果(包括訓練辨識率、測試辨識率、鍵結值等)
 window.mainloop()

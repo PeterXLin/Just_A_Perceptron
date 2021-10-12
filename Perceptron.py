@@ -11,6 +11,8 @@ class Dataset:
         # print(training_data_size)
         self.training_dataset = raw_data[:training_data_size]
         self.validation_dataset = raw_data[training_data_size:]
+        self.training_data_size = training_data_size
+        self.validation_data_size = raw_data.shape[0] - training_data_size
 
 
 def get_class(type_index: int, output_dim):
@@ -75,7 +77,6 @@ class Model:
         return result + 1
 
 
-# TODO: check error rate
 def train_model(config: dict, dataset: Dataset, perceptron: Model):
     min_error = 10000
     check_count = 0
@@ -92,6 +93,8 @@ def train_model(config: dict, dataset: Dataset, perceptron: Model):
                 if tmp_error < min_error:
                     min_error = tmp_error
                     perceptron.best_neuron_list = perceptron.neuron_list.copy()
+                    if tmp_error/dataset.validation_data_size <= config['error_rate']:
+                        return perceptron
                 check_count = 0
             else:
                 check_count = check_count + 1

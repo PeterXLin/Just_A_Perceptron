@@ -8,18 +8,18 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 
 # -------------------------- functions --------------------------
 def get_configure_and_run():
-    # get_configure()
+    get_configure()
     dataset = Perceptron.Dataset(config['path'], config['classes'])
     my_model = Perceptron.Model(dataset.feature, config['classes'], config['learning_rate'])
     my_model = Perceptron.train_model(config, dataset, my_model)
     if config['classes'] == 2:
         get_data_distribution_map_and_prediction_line(np.concatenate(
             (dataset.training_dataset, dataset.validation_dataset), axis=0),
-            111, data_only=True)
+            1, data_only=True)
         get_data_distribution_map_and_prediction_line(dataset.training_dataset,
-                                                      121, False, my_model.best_neuron_list[0])
+                                                      1, False, my_model.best_neuron_list[0])
         get_data_distribution_map_and_prediction_line(dataset.validation_dataset,
-                                                      121, False, my_model.best_neuron_list[0])
+                                                      1, False, my_model.best_neuron_list[0])
 
 
 def get_configure():
@@ -43,8 +43,8 @@ def get_configure():
 def get_data_distribution_map_and_prediction_line(dataset: 'np.ndarray', position: int, data_only=True,
                                                   weight: list = None):
     """draw figure and show it on window"""
-    fig = Figure(figsize=(3, 3), dpi=100)
-    plot1 = fig.add_subplot(position)
+    fig = Figure(figsize=(3, 2.5), dpi=100)
+    plot1 = fig.add_subplot(111)
     x_1, y_1, x_2, y_2 = separate_data_by_class(dataset)
     plot1.scatter(x_1, y_1, c='red', s=5)
     plot1.scatter(x_2, y_2, c='green', s=5)
@@ -55,9 +55,19 @@ def get_data_distribution_map_and_prediction_line(dataset: 'np.ndarray', positio
     # other setting
     plot1.axhline(y=0)
     plot1.axvline(x=0)
-    canvas = FigureCanvasTkAgg(fig, master=middle_part)
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=tk.YES)
+    if position == 1:
+        canvas = FigureCanvasTkAgg(fig, master=middle_up)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill='y')
+    elif position == 2:
+        canvas = FigureCanvasTkAgg(fig, master=middle_middle)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill='y')
+    else:
+        canvas = FigureCanvasTkAgg(fig, master=middle_down)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill='y')
+
     # toolbar = NavigationToolbar2Tk(canvas, right_part)
     # toolbar.update()
     # canvas.get_tk_widget().pack()
@@ -101,16 +111,22 @@ config = {'path': 'Dataset/2Hcircle1.txt',
 # --------------------------- GUI --------------------------------
 window = tk.Tk()
 window.title('Have Fun with Perceptron')
-window.geometry('1200x700')
+window.geometry('1000x750')
 window.resizable(False, False)
 # window.configure(background='white')
 
-left_part = tk.Frame(window, width=200, height=700)
+left_part = tk.Frame(window, width=200, height=750)
 left_part.pack(side=tk.LEFT)
-middle_part = tk.Frame(window, width=1000, height=700)
+middle_part = tk.Frame(window, width=500, height=750, bg='white')
 middle_part.pack(side=tk.LEFT)
-# right_part = tk.Frame(window, width=400, height=700)
-# right_part.pack(side=tk.LEFT)
+middle_up = tk.Frame(middle_part, width=500, height=250, bg='white')
+middle_up.pack()
+middle_middle = tk.Frame(middle_part, width=500, height=250, bg='white')
+middle_middle.pack()
+middle_down = tk.Frame(middle_part, width=500, height=250, bg='white')
+middle_down.pack()
+right_part = tk.Frame(window, width=300, height=750, bg='white')
+right_part.pack(side=tk.LEFT)
 
 # -------------------- Left Part Object -----------------------------
 header_label = tk.Label(left_part, text='Perceptron Playground')
@@ -158,7 +174,4 @@ run_btn = tk.Button(left_part, text='run', command=get_configure_and_run)
 run_btn.pack()
 # --------------------------------------------------------------------
 # TODO: 顯示訓練結果(包括訓練辨識率、測試辨識率、鍵結值等)
-
-# TODO: 二維資料能顯示資料點於二維座標的位置，並依照分群結果以不同顏色或符號表示。
-
 window.mainloop()

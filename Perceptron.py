@@ -5,7 +5,7 @@ class Dataset:
     def __init__(self, path):
         raw_data = np.loadtxt(path, dtype=np.float, delimiter=' ')
         np.random.shuffle(raw_data)
-        training_data_size = ((raw_data.shape[0] * 2) // 3)
+        training_data_size = ((raw_data.shape[0] * 2) // 3) + 1
         self.class_list = get_class_list(raw_data)
         self.class_type = len(self.class_list)
         self.feature = raw_data.shape[1] - 1
@@ -38,7 +38,6 @@ def get_class_list(data_array: np.ndarray) -> list:
     return sorted(all_types)
 
 
-# TODO: use new type decide method
 class Model:
     def __init__(self, input_dim: int, types: int, lr_rate: int):
         # need at least neuron_amount digit to present all the types
@@ -74,20 +73,18 @@ class Model:
                         self.neuron_list[i][j + 1] = self.neuron_list[i][j + 1] - self.lr_rate * feature[j]
 
     def predict(self, feature):
-        """give feature return predict"""
+        """give data return the model's prediction(in class index not every neuron's output)"""
         result = 0
         for i in range(self.neuron_amount):
             output_tmp = -1 * self.neuron_list[i][0]
             for j in range(self.input_dim):
                 output_tmp = output_tmp + feature[j]*self.neuron_list[i][j+1]
             output_tmp = 1 if output_tmp >= 0 else 0
-            # if output_tmp >= 0:
-            #     output_tmp = 1
-            # else:
-            #     output_tmp = 0
-            # binary to decimal
             result = result * 2 + output_tmp
         return result
+
+    def to_best(self):
+        self.neuron_list = self.best_neuron_list.copy()
 
 
 def train_model(config: dict, dataset: Dataset, perceptron: Model):
@@ -97,7 +94,7 @@ def train_model(config: dict, dataset: Dataset, perceptron: Model):
         np.random.shuffle(dataset.training_dataset)
         for training_data in dataset.training_dataset:
             perceptron.update(training_data)
-            # check if model is better
+            # test if model is better than before
             if check_count == config['check_packet_frequency']:
                 tmp_error = 0
                 for validation_data in dataset.validation_dataset:

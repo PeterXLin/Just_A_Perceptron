@@ -3,7 +3,7 @@ from tkinter import ttk
 import Perceptron
 import numpy as np
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 # -------------------------- functions --------------------------
@@ -12,25 +12,30 @@ def get_configure_and_run():
     dataset = Perceptron.Dataset(config['path'])
     my_model = Perceptron.Model(dataset.feature, dataset.class_type, config['learning_rate'])
     my_model = Perceptron.train_model(config, dataset, my_model)
-    # draw data distribution map
+    my_model.to_best()
+    # draw 2-d data distribution map
     if dataset.feature == 2:
-        draw_data_distribution_map_and_prediction_line(np.concatenate(
-            (dataset.training_dataset, dataset.validation_dataset), axis=0),
-            1, data_only=True)
-        draw_data_distribution_map_and_prediction_line(dataset.training_dataset,
-                                                       2, False, my_model.best_neuron_list)
-        draw_data_distribution_map_and_prediction_line(dataset.validation_dataset,
-                                                       3, False, my_model.best_neuron_list)
-    elif len(dataset.class_list) == 3:
-        # TODO: plot 3d map
-        # plot 3-d map
-        print('hello world')
+        draw_2d_data_distribution_map_and_prediction_line(np.concatenate(
+            (dataset.training_dataset, dataset.validation_dataset), axis=0), 1, data_only=True)
+        draw_2d_data_distribution_map_and_prediction_line(dataset.training_dataset,
+                                                          2, False, my_model.best_neuron_list)
+        draw_2d_data_distribution_map_and_prediction_line(dataset.validation_dataset,
+                                                          3, False, my_model.best_neuron_list)
+    elif dataset.feature == 3:
+        draw_3d_data_distribution_map_and_prediction_line(np.concatenate(
+            (dataset.training_dataset, dataset.validation_dataset), axis=0), 1, data_only=True)
+        draw_3d_data_distribution_map_and_prediction_line(dataset.training_dataset,
+                                                          2, False, my_model.best_neuron_list)
+        draw_3d_data_distribution_map_and_prediction_line(dataset.validation_dataset,
+                                                          3, False, my_model.best_neuron_list)
 
-    # TODO: get correct rate and show it
-    # testing_correct_rate = get_correct_rate()
+    training_label['text'] = str(get_correct_rate(dataset.training_dataset, my_model))
+    testing_label['text'] = str(get_correct_rate(dataset.validation_dataset, my_model))
+    weight_label['text'] = str(my_model.best_neuron_list)
 
 
 def get_configure():
+
     file_name = file_select.get()
     config['path'] = 'Dataset/' + file_name
     try:
@@ -43,8 +48,8 @@ def get_configure():
         error_message['text'] = 'Please enter a number'
 
 
-def draw_data_distribution_map_and_prediction_line(dataset: "np.ndarry", position: int, data_only=True,
-                                                   all_weights: list = None):
+def draw_2d_data_distribution_map_and_prediction_line(dataset: "np.ndarry", position: int, data_only=True,
+                                                      all_weights: list = None):
     """draw figure and show it on window"""
     if position == 1:
         fig = fig1
@@ -65,17 +70,62 @@ def draw_data_distribution_map_and_prediction_line(dataset: "np.ndarry", positio
         plot1.scatter(x_1[i], x_2[i], c=color_list[i % 8], s=5)
 
     if not data_only:
-        x = get_x_range(dataset)
+        x_range = get_x_range(dataset)
+        y_range = get_x_range(dataset, 1)
+        count = 1
         for weight in all_weights:
-            if weight[2] == 0:
-                y = get_x_range(dataset, 1)
-                x = 0*y + weight[0]/weight[1]
+            if weight[1] == 0:
+                x = x_range
+                y = -weight[0] / weight[1]
+                plot1.plot(x, y, c=color_list[-count])
+            elif weight[2] == 0:
+                y = y_range
+                x = -weight[0] / weight[2]
+                plot1.plot(x, y, c=color_list[-count])
             else:
+                x = x_range
                 y = -(-weight[0] + weight[1] * x) / weight[2]
-                plot1.plot(x, y, c='purple')
+                plot1.plot(x, y, c=color_list[-count])
     # other setting
     plot1.axhline(y=0)
     plot1.axvline(x=0)
+    canvas.draw()
+    canvas.get_tk_widget().pack()
+
+
+def draw_3d_data_distribution_map_and_prediction_line(dataset: "np.ndarry", position: int, data_only=True,
+                                                      all_weights: list = None):
+    """draw figure and show it on window"""
+    if position == 1:
+        fig = fig1
+        canvas = canvas1
+    elif position == 2:
+        fig = fig2
+        canvas = canvas2
+    else:
+        fig = fig3
+        canvas = canvas3
+    fig.clear()
+    plot1 = fig.add_subplot(111, projection='3d')
+
+    x_1, x_2, x_3, classes = separate_3d_data_by_class(dataset)
+    color_list = ["orange", "blue", "brown", "red",
+                  "grey", "yellow", "green", "pink"]
+
+    for i in range(len(x_1)):
+        plot1.scatter(x_1[i], x_2[i], x_3[i], c=color_list[i % 8], s=5)
+
+    if not data_only:
+        x = get_x_range(dataset)
+        y = get_x_range(dataset, 1)
+        if len(y) > len(x):
+            x = y
+        count = 1
+        for weight in all_weights:
+            z = -(-weight[0] + weight[1] * x + weight[2] * x) / weight[3]
+            plot1.plot(x, x, z, c=color_list[-count])
+            count = count + 1
+    # other setting
     canvas.draw()
     canvas.get_tk_widget().pack()
 
@@ -89,9 +139,26 @@ def separate_2d_data_by_class(dataset: np.ndarray):
         x_2.append(list())
     for d in dataset:
         # type_index = class_list.index(d[-1])
+        x_1[int(class_list.index(d[-1]))].append(d[0])
+        x_2[int(class_list.index(d[-1]))].append(d[1])
+    return x_1, x_2, len(class_list)
+
+
+def separate_3d_data_by_class(dataset: np.ndarray):
+    x_1 = list()
+    x_2 = list()
+    x_3 = list()
+    class_list = Perceptron.get_class_list(dataset)
+    for i in range(len(class_list)):
+        x_1.append(list())
+        x_2.append(list())
+        x_3.append(list())
+    for d in dataset:
+        # type_index = class_list.index(d[-1])
         x_1[int(d[-1])].append(d[0])
         x_2[int(d[-1])].append(d[1])
-    return x_1, x_2, len(class_list)
+        x_3[int(d[-1])].append(d[2])
+    return x_1, x_2, x_3, len(class_list)
 
 
 def get_x_range(dataset: np.ndarray, feature_index: int = 0):
@@ -100,15 +167,20 @@ def get_x_range(dataset: np.ndarray, feature_index: int = 0):
     return np.arange(x1_min, x1_max, 0.1)
 
 
-# TODO: finish this function
-def get_correct_rate():
-    pass
+def get_correct_rate(dataset: np.ndarray, model: Perceptron.Model):
+    data_amount = len(dataset)
+    error_amount = 0
+    for data in dataset:
+        if model.predict(data) != data[-1]:
+            error_amount = error_amount + 1
+    return (data_amount - error_amount) / data_amount
+
 
 # ------------------------ Config --------------------------
 np.random.seed(1)
 file_list = ['perceptron1.txt', 'perceptron2.txt', '2Ccircle1.txt',
              '2Circle1.txt', '2Circle2.txt', '2CloseS.txt', '2CloseS2.txt',
-             '2CloseS3.txt', '2cring.txt', '2CS.txt', '2Hcircle1.txt', '2ring.txt']
+             '2CloseS3.txt', '2cring.txt', '2CS.txt', '2Hcircle1.txt', '2ring.txt', 'C3D.TXT']
 
 config = {'path': 'Dataset/2Hcircle1.txt',
           'learning_rate': 0.8,
@@ -194,5 +266,13 @@ canvas3.draw()
 canvas3.get_tk_widget().pack(side=tk.TOP, fill='y')
 # ---------------------------------------------------------------------
 
-# TODO: create label object to 顯示訓練結果(包括訓練辨識率、測試辨識率、鍵結值等)
+result_frame = tk.Frame(right_part)
+result_frame.pack()
+training_label = tk.Label(result_frame, text='')
+training_label.pack()
+testing_label = tk.Label(result_frame, text='')
+testing_label.pack()
+weight_label = tk.Label(result_frame, text='')
+weight_label.pack()
+
 window.mainloop()

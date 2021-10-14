@@ -8,28 +8,31 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 
 # -------------------------- functions --------------------------
 def get_configure_and_run():
-    # get_configure()
-    dataset = Perceptron.Dataset(config['path'], config['classes'])
-    my_model = Perceptron.Model(dataset.feature, config['classes'], config['learning_rate'])
+    get_configure()
+    dataset = Perceptron.Dataset(config['path'])
+    my_model = Perceptron.Model(dataset.feature, dataset.class_type, config['learning_rate'])
     my_model = Perceptron.train_model(config, dataset, my_model)
-    if config['classes'] == 2:
-        get_data_distribution_map_and_prediction_line(np.concatenate(
+    # draw data distribution map
+    if dataset.feature == 2:
+        draw_data_distribution_map_and_prediction_line(np.concatenate(
             (dataset.training_dataset, dataset.validation_dataset), axis=0),
             1, data_only=True)
-        get_data_distribution_map_and_prediction_line(dataset.training_dataset,
-                                                      2, False, my_model.best_neuron_list[0])
-        get_data_distribution_map_and_prediction_line(dataset.validation_dataset,
-                                                      3, False, my_model.best_neuron_list[0])
+        draw_data_distribution_map_and_prediction_line(dataset.training_dataset,
+                                                       2, False, my_model.best_neuron_list)
+        draw_data_distribution_map_and_prediction_line(dataset.validation_dataset,
+                                                       3, False, my_model.best_neuron_list)
+    elif len(dataset.class_list) == 3:
+        # TODO: plot 3d map
+        # plot 3-d map
+        print('hello world')
+
+    # TODO: get correct rate and show it
+    # testing_correct_rate = get_correct_rate()
 
 
 def get_configure():
     file_name = file_select.get()
     config['path'] = 'Dataset/' + file_name
-    if more_than_two_dict.get(file_name) is None:
-        config['classes'] = 2
-    else:
-        config['classes'] = more_than_two_dict[file_name]
-
     try:
         config['learning_rate'] = float(lr_entry.get())
         config['check_packet_frequency'] = int(check_entry.get())
@@ -40,8 +43,8 @@ def get_configure():
         error_message['text'] = 'Please enter a number'
 
 
-def get_data_distribution_map_and_prediction_line(dataset: 'np.ndarray', position: int, data_only=True,
-                                                  weight: list = None):
+def draw_data_distribution_map_and_prediction_line(dataset: "np.ndarry", position: int, data_only=True,
+                                                   all_weights: list = None):
     """draw figure and show it on window"""
     if position == 1:
         fig = fig1
@@ -52,61 +55,54 @@ def get_data_distribution_map_and_prediction_line(dataset: 'np.ndarray', positio
     else:
         fig = fig3
         canvas = canvas3
-
-    # for item in canvas.get_tk_widget().find_all():
-    #     canvas.get_tk_widget().delete(item)
     fig.clear()
     plot1 = fig.add_subplot(111)
-    x_1, y_1, x_2, y_2 = separate_data_by_class(dataset)
-    plot1.scatter(x_1, y_1, c='red', s=5)
-    plot1.scatter(x_2, y_2, c='green', s=5)
+
+    x_1, x_2, classes = separate_2d_data_by_class(dataset)
+    color_list = ["orange", "blue", "brown", "red",
+                  "grey", "yellow", "green", "pink"]
+    for i in range(len(x_1)):
+        plot1.scatter(x_1[i], x_2[i], c=color_list[i % 8], s=5)
+
     if not data_only:
         x = get_x_range(dataset)
-        y = -(-weight[0] + weight[1] * x) / weight[2]
-        plot1.plot(x, y, c='purple')
+        for weight in all_weights:
+            if weight[2] == 0:
+                y = get_x_range(dataset, 1)
+                x = 0*y + weight[0]/weight[1]
+            else:
+                y = -(-weight[0] + weight[1] * x) / weight[2]
+                plot1.plot(x, y, c='purple')
     # other setting
     plot1.axhline(y=0)
     plot1.axvline(x=0)
     canvas.draw()
     canvas.get_tk_widget().pack()
-    # if position == 1:
-    #     # canvas = FigureCanvasTkAgg(fig, master=middle_up)
-    #     canvas1.draw()
-    #     canvas1.get_tk_widget().pack(side=tk.TOP, fill='y')
-    # elif position == 2:
-    #     # canvas = FigureCanvasTkAgg(fig, master=middle_middle)
-    #     canvas2.draw()
-    #     canvas2.get_tk_widget().pack(side=tk.TOP, fill='y')
-    # else:
-    #     # canvas = FigureCanvasTkAgg(fig, master=middle_down)
-    #     canvas3.draw()
-    #     canvas3.get_tk_widget().pack(side=tk.TOP, fill='y')
-
-    # toolbar = NavigationToolbar2Tk(canvas, right_part)
-    # toolbar.update()
-    # canvas.get_tk_widget().pack()
 
 
-def separate_data_by_class(dataset: np.ndarray):
-    x_1_class_1 = list()
-    x_1_class_2 = list()
-    x_2_class_1 = list()
-    x_2_class_2 = list()
+def separate_2d_data_by_class(dataset: np.ndarray):
+    x_1 = list()
+    x_2 = list()
+    class_list = Perceptron.get_class_list(dataset)
+    for i in range(len(class_list)):
+        x_1.append(list())
+        x_2.append(list())
     for d in dataset:
-        if d[2] == 1:
-            x_1_class_1.append(d[0])
-            x_2_class_1.append(d[1])
-        elif d[2] == 2:
-            x_1_class_2.append(d[0])
-            x_2_class_2.append(d[1])
-    return x_1_class_1, x_2_class_1, x_1_class_2, x_2_class_2
+        # type_index = class_list.index(d[-1])
+        x_1[int(d[-1])].append(d[0])
+        x_2[int(d[-1])].append(d[1])
+    return x_1, x_2, len(class_list)
 
 
-def get_x_range(dataset: np.ndarray):
-    x1_min = np.amin(dataset, axis=0)[0]
-    x1_max = np.amax(dataset, axis=0)[0]
+def get_x_range(dataset: np.ndarray, feature_index: int = 0):
+    x1_min = np.amin(dataset, axis=0)[feature_index]
+    x1_max = np.amax(dataset, axis=0)[feature_index]
     return np.arange(x1_min, x1_max, 0.1)
 
+
+# TODO: finish this function
+def get_correct_rate():
+    pass
 
 # ------------------------ Config --------------------------
 np.random.seed(1)
@@ -114,10 +110,7 @@ file_list = ['perceptron1.txt', 'perceptron2.txt', '2Ccircle1.txt',
              '2Circle1.txt', '2Circle2.txt', '2CloseS.txt', '2CloseS2.txt',
              '2CloseS3.txt', '2cring.txt', '2CS.txt', '2Hcircle1.txt', '2ring.txt']
 
-more_than_two_dict = {}
-
 config = {'path': 'Dataset/2Hcircle1.txt',
-          'classes': 2,
           'learning_rate': 0.8,
           'check_packet_frequency': 30,
           'epoch': 600,
@@ -131,15 +124,15 @@ window.resizable(False, False)
 
 left_part = tk.Frame(window, width=200, height=750)
 left_part.pack(side=tk.LEFT)
-middle_part = tk.Frame(window, width=500, height=750, bg='white')
+middle_part = tk.Frame(window, width=350, height=750, bg='white')
 middle_part.pack(side=tk.LEFT)
-middle_up = tk.Frame(middle_part, width=500, height=250, bg='white')
+middle_up = tk.Frame(middle_part, width=350, height=250, bg='white')
 middle_up.pack()
-middle_middle = tk.Frame(middle_part, width=500, height=250, bg='white')
+middle_middle = tk.Frame(middle_part, width=350, height=250, bg='white')
 middle_middle.pack()
-middle_down = tk.Frame(middle_part, width=500, height=250, bg='white')
+middle_down = tk.Frame(middle_part, width=350, height=250, bg='white')
 middle_down.pack()
-right_part = tk.Frame(window, width=300, height=750, bg='white')
+right_part = tk.Frame(window, width=450, height=750, bg='white')
 right_part.pack(side=tk.LEFT)
 
 # -------------------- Left Part Object -----------------------------
@@ -201,5 +194,5 @@ canvas3.draw()
 canvas3.get_tk_widget().pack(side=tk.TOP, fill='y')
 # ---------------------------------------------------------------------
 
-# TODO: 顯示訓練結果(包括訓練辨識率、測試辨識率、鍵結值等)
+# TODO: create label object to 顯示訓練結果(包括訓練辨識率、測試辨識率、鍵結值等)
 window.mainloop()

@@ -2,13 +2,16 @@ import numpy as np
 
 
 class Dataset:
-    def __init__(self, path, classes: int):
+    def __init__(self, path):
         raw_data = np.loadtxt(path, dtype=np.float, delimiter=' ')
-        self.classes = classes
-        self.feature = raw_data.shape[1] - 1
         np.random.shuffle(raw_data)
-        training_data_size = (raw_data.shape[0] * 2) // 3
-        # print(training_data_size)
+        training_data_size = ((raw_data.shape[0] * 2) // 3)
+        self.class_list = get_class_list(raw_data)
+        self.class_type = len(self.class_list)
+        self.feature = raw_data.shape[1] - 1
+        # transfer class number to 0~n-1
+        for i in range(raw_data.shape[0]):
+            raw_data[i][-1] = self.class_list.index(raw_data[i][-1])
         self.training_dataset = raw_data[:training_data_size]
         self.validation_dataset = raw_data[training_data_size:]
         self.training_data_size = training_data_size
@@ -16,6 +19,7 @@ class Dataset:
 
 
 def get_class(type_index: int, output_dim):
+    """turn type index in decimal to binary represent"""
     binary_represent = list()
     while type_index:
         binary_represent.append(type_index % 2)
@@ -25,6 +29,16 @@ def get_class(type_index: int, output_dim):
     return binary_represent
 
 
+def get_class_list(data_array: np.ndarray) -> list:
+    """count how many different classes this dataset have and return a list of all the types"""
+    all_types = []
+    for i in data_array:
+        if i[-1] not in all_types:
+            all_types.append(i[-1])
+    return sorted(all_types)
+
+
+# TODO: use new type decide method
 class Model:
     def __init__(self, input_dim: int, types: int, lr_rate: int):
         # need at least neuron_amount digit to present all the types
@@ -41,16 +55,13 @@ class Model:
         self.neuron_amount = neuron_amount
 
     def update(self, feature):
-        correct_output = get_class(feature[-1] - 1, self.neuron_amount)
+        correct_output = get_class(feature[-1], self.neuron_amount)
         for i in range(self.neuron_amount):
             output_tmp = -1 * self.neuron_list[i][0]
             for j in range(self.input_dim):
                 output_tmp = output_tmp + feature[j]*self.neuron_list[i][j+1]
 
-            if output_tmp >= 0:
-                output_tmp = 1
-            else:
-                output_tmp = 0
+            output_tmp = 1 if output_tmp >= 0 else 0
 
             if output_tmp != correct_output[i]:
                 if output_tmp == 0:
@@ -69,12 +80,14 @@ class Model:
             output_tmp = -1 * self.neuron_list[i][0]
             for j in range(self.input_dim):
                 output_tmp = output_tmp + feature[j]*self.neuron_list[i][j+1]
-            if output_tmp >= 0:
-                output_tmp = 1
-            else:
-                output_tmp = 0
-            result = result*2 + output_tmp
-        return result + 1
+            output_tmp = 1 if output_tmp >= 0 else 0
+            # if output_tmp >= 0:
+            #     output_tmp = 1
+            # else:
+            #     output_tmp = 0
+            # binary to decimal
+            result = result * 2 + output_tmp
+        return result
 
 
 def train_model(config: dict, dataset: Dataset, perceptron: Model):

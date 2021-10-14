@@ -4,6 +4,7 @@ import Perceptron
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import filedialog as fd
 
 
 # -------------------------- functions --------------------------
@@ -14,6 +15,9 @@ def get_configure_and_run():
     my_model = Perceptron.train_model(config, dataset, my_model)
     my_model.to_best()
     # draw 2-d data distribution map
+    fig1.clear()
+    fig2.clear()
+    fig3.clear()
     if dataset.feature == 2:
         draw_2d_data_distribution_map_and_prediction_line(np.concatenate(
             (dataset.training_dataset, dataset.validation_dataset), axis=0), 1, data_only=True)
@@ -35,9 +39,6 @@ def get_configure_and_run():
 
 
 def get_configure():
-
-    file_name = file_select.get()
-    config['path'] = 'Dataset/' + file_name
     try:
         config['learning_rate'] = float(lr_entry.get())
         config['check_packet_frequency'] = int(check_entry.get())
@@ -105,7 +106,6 @@ def draw_3d_data_distribution_map_and_prediction_line(dataset: "np.ndarry", posi
     else:
         fig = fig3
         canvas = canvas3
-    fig.clear()
     plot1 = fig.add_subplot(111, projection='3d')
 
     x_1, x_2, x_3, classes = separate_3d_data_by_class(dataset)
@@ -138,9 +138,9 @@ def separate_2d_data_by_class(dataset: np.ndarray):
         x_1.append(list())
         x_2.append(list())
     for d in dataset:
-        # type_index = class_list.index(d[-1])
-        x_1[int(class_list.index(d[-1]))].append(d[0])
-        x_2[int(class_list.index(d[-1]))].append(d[1])
+        type_index = int(class_list.index(d[-1]))
+        x_1[type_index].append(d[0])
+        x_2[type_index].append(d[1])
     return x_1, x_2, len(class_list)
 
 
@@ -154,10 +154,10 @@ def separate_3d_data_by_class(dataset: np.ndarray):
         x_2.append(list())
         x_3.append(list())
     for d in dataset:
-        # type_index = class_list.index(d[-1])
-        x_1[int(d[-1])].append(d[0])
-        x_2[int(d[-1])].append(d[1])
-        x_3[int(d[-1])].append(d[2])
+        type_index = int(class_list.index(d[-1]))
+        x_1[type_index].append(d[0])
+        x_2[type_index].append(d[1])
+        x_3[type_index].append(d[2])
     return x_1, x_2, x_3, len(class_list)
 
 
@@ -176,17 +176,24 @@ def get_correct_rate(dataset: np.ndarray, model: Perceptron.Model):
     return (data_amount - error_amount) / data_amount
 
 
+def select_file():
+    filetypes = (
+        ('text files', '*.txt'),
+    )
+    config['path'] = fd.askopenfilename(
+        title='Open a file',
+        initialdir='./Dataset',
+        filetypes=filetypes)
+
+
 # ------------------------ Config --------------------------
 np.random.seed(1)
-file_list = ['perceptron1.txt', 'perceptron2.txt', '2Ccircle1.txt',
-             '2Circle1.txt', '2Circle2.txt', '2CloseS.txt', '2CloseS2.txt',
-             '2CloseS3.txt', '2cring.txt', '2CS.txt', '2Hcircle1.txt', '2ring.txt', 'C3D.TXT']
 
 config = {'path': 'Dataset/2Hcircle1.txt',
           'learning_rate': 0.8,
           'check_packet_frequency': 30,
           'epoch': 600,
-          'error_rate': 0.01}
+          'error_rate': 0.01,}
 # --------------------------- GUI --------------------------------
 window = tk.Tk()
 window.title('Have Fun with Perceptron')
@@ -204,19 +211,22 @@ middle_middle = tk.Frame(middle_part, width=350, height=250, bg='white')
 middle_middle.pack()
 middle_down = tk.Frame(middle_part, width=350, height=250, bg='white')
 middle_down.pack()
-right_part = tk.Frame(window, width=450, height=750, bg='white')
+right_part = tk.Frame(window, width=450, height=750)
 right_part.pack(side=tk.LEFT)
 
 # -------------------- Left Part Object -----------------------------
-header_label = tk.Label(left_part, text='Perceptron Playground')
+header_label = tk.Label(left_part, text='Perceptron Playground', font=("Courier", 16))
 header_label.pack(side=tk.TOP)
 
 file_frame = tk.Frame(left_part)
 file_frame.pack()
 file_label = tk.Label(file_frame, text='File')
 file_label.pack(side=tk.LEFT)
-file_select = ttk.Combobox(file_frame, values=file_list, state='readonly')
-file_select.pack(side=tk.LEFT)
+open_button = ttk.Button(file_frame, text='choose a File', command=select_file)
+open_button.pack(side=tk.LEFT)
+
+# file_select = ttk.Combobox(file_frame, values=file_list, state='readonly')
+# file_select.pack(side=tk.LEFT)
 
 lr_frame = tk.Frame(left_part)
 lr_frame.pack()
@@ -266,13 +276,17 @@ canvas3.draw()
 canvas3.get_tk_widget().pack(side=tk.TOP, fill='y')
 # ---------------------------------------------------------------------
 
-result_frame = tk.Frame(right_part)
-result_frame.pack()
-training_label = tk.Label(result_frame, text='')
+training_text = tk.Label(right_part, text='Training Data Correct Rate')
+training_text.pack()
+training_label = tk.Label(right_part, text='', wraplength=400)
 training_label.pack()
-testing_label = tk.Label(result_frame, text='')
+testing_text = tk.Label(right_part, text='Testing Data Correct Rate')
+testing_text.pack()
+testing_label = tk.Label(right_part, text='', wraplength=400)
 testing_label.pack()
-weight_label = tk.Label(result_frame, text='')
+weight_text = tk.Label(right_part, text='Weights')
+weight_text.pack()
+weight_label = tk.Label(right_part, text='', wraplength=400)
 weight_label.pack()
 
 window.mainloop()

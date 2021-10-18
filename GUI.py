@@ -194,7 +194,7 @@ config = {'path': 'Dataset/2Hcircle1.txt',
           'learning_rate': 0.8,
           'check_packet_frequency': 30,
           'epoch': 600,
-          'error_rate': 0.01,}
+          'error_rate': 0.01}
 # --------------------------- GUI --------------------------------
 window = tk.Tk()
 window.title('Have Fun with Perceptron')
@@ -225,9 +225,6 @@ file_label = tk.Label(file_frame, text='File')
 file_label.pack(side=tk.LEFT)
 open_button = ttk.Button(file_frame, text='choose a File', command=select_file)
 open_button.pack(side=tk.LEFT)
-
-# file_select = ttk.Combobox(file_frame, values=file_list, state='readonly')
-# file_select.pack(side=tk.LEFT)
 
 lr_frame = tk.Frame(left_part)
 lr_frame.pack()

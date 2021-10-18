@@ -2,9 +2,11 @@ import numpy as np
 
 
 class Dataset:
-    def __init__(self, path):
+    def __init__(self, path, all_train: float = False):
         raw_data = np.loadtxt(path, dtype=np.float, delimiter=' ')
         training_data_size = ((raw_data.shape[0] * 2) // 3) + 1
+        if all_train:
+            training_data_size = raw_data.shape[0]
         self.class_list = get_class_list(raw_data)
         self.class_type = len(self.class_list)
         self.feature = raw_data.shape[1] - 1
@@ -104,7 +106,8 @@ def train_model(config: dict, dataset: Dataset, perceptron: Model):
                 if tmp_error < min_error:
                     min_error = tmp_error
                     perceptron.best_neuron_list = perceptron.neuron_list.copy()
-                    if tmp_error/dataset.validation_data_size <= config['error_rate']:
+                    if dataset.validation_data_size > 0 and \
+                            tmp_error/dataset.validation_data_size <= config['error_rate']:
                         return perceptron
                 check_count = 0
             else:

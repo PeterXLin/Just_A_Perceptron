@@ -4,7 +4,6 @@ import numpy as np
 class Dataset:
     def __init__(self, path):
         raw_data = np.loadtxt(path, dtype=np.float, delimiter=' ')
-        np.random.shuffle(raw_data)
         training_data_size = ((raw_data.shape[0] * 2) // 3) + 1
         self.class_list = get_class_list(raw_data)
         self.class_type = len(self.class_list)
@@ -12,6 +11,7 @@ class Dataset:
         # transfer class number to 0~n-1
         for i in range(raw_data.shape[0]):
             raw_data[i][-1] = self.class_list.index(raw_data[i][-1])
+        np.random.shuffle(raw_data)
         self.training_dataset = raw_data[:training_data_size]
         self.validation_dataset = raw_data[training_data_size:]
         self.training_data_size = training_data_size
@@ -55,10 +55,11 @@ class Model:
 
     def update(self, feature):
         correct_output = get_class(feature[-1], self.neuron_amount)
+        # for every neuron
         for i in range(self.neuron_amount):
             output_tmp = -1 * self.neuron_list[i][0]
             for j in range(self.input_dim):
-                output_tmp = output_tmp + feature[j]*self.neuron_list[i][j+1]
+                output_tmp = output_tmp + feature[j] * self.neuron_list[i][j+1]
 
             output_tmp = 1 if output_tmp >= 0 else 0
 
@@ -66,7 +67,7 @@ class Model:
                 if output_tmp == 0:
                     self.neuron_list[i][0] = self.neuron_list[i][0] - self.lr_rate
                     for j in range(self.input_dim):
-                        self.neuron_list[i][j+1] = self.neuron_list[i][j+1] + self.lr_rate * feature[j]
+                        self.neuron_list[i][j + 1] = self.neuron_list[i][j + 1] + self.lr_rate * feature[j]
                 else:
                     self.neuron_list[i][0] = self.neuron_list[i][0] + self.lr_rate
                     for j in range(self.input_dim):
@@ -75,10 +76,10 @@ class Model:
     def predict(self, feature):
         """give data return the model's prediction(in class index not every neuron's output)"""
         result = 0
-        for i in range(self.neuron_amount):
+        for i in range(self.neuron_amount - 1, -1, -1):
             output_tmp = -1 * self.neuron_list[i][0]
             for j in range(self.input_dim):
-                output_tmp = output_tmp + feature[j]*self.neuron_list[i][j+1]
+                output_tmp = output_tmp + feature[j] * self.neuron_list[i][j+1]
             output_tmp = 1 if output_tmp >= 0 else 0
             result = result * 2 + output_tmp
         return result

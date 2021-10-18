@@ -87,6 +87,7 @@ def draw_2d_data_distribution_map_and_prediction_line(dataset: "np.ndarry", posi
                 x = x_range
                 y = -(-weight[0] + weight[1] * x) / weight[2]
                 plot1.plot(x, y, c=color_list[-count])
+            count = count + 1
     # other setting
     plot1.axhline(y=0)
     plot1.axvline(x=0)

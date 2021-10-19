@@ -18,6 +18,12 @@ def get_configure_and_run():
     fig1.clear()
     fig2.clear()
     fig3.clear()
+    canvas1.draw()
+    canvas1.get_tk_widget().pack()
+    canvas2.draw()
+    canvas2.get_tk_widget().pack()
+    canvas3.draw()
+    canvas3.get_tk_widget().pack()
     if dataset.feature == 2:
         draw_2d_data_distribution_map_and_prediction_line(np.concatenate(
             (dataset.training_dataset, dataset.validation_dataset), axis=0), 1, data_only=True)
@@ -165,6 +171,8 @@ def separate_3d_data_by_class(dataset: np.ndarray):
 def get_x_range(dataset: np.ndarray, feature_index: int = 0):
     x1_min = np.amin(dataset, axis=0)[feature_index]
     x1_max = np.amax(dataset, axis=0)[feature_index]
+    if x1_min == x1_max:
+        return np.arange(x1_max - 3, x1_max + 3, 0.1)
     return np.arange(x1_min, x1_max, 0.1)
 
 

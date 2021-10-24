@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 import Perceptron
 import numpy as np
 from matplotlib.figure import Figure
@@ -55,7 +54,7 @@ def get_configure():
         error_message['text'] = 'Please enter a number'
 
 
-def draw_2d_data_distribution_map_and_prediction_line(dataset: "np.ndarry", position: int, data_only=True,
+def draw_2d_data_distribution_map_and_prediction_line(dataset, position: int, data_only=True,
                                                       all_weights: list = None):
     """draw figure and show it on window"""
     if position == 1:
@@ -101,7 +100,7 @@ def draw_2d_data_distribution_map_and_prediction_line(dataset: "np.ndarry", posi
     canvas.get_tk_widget().pack()
 
 
-def draw_3d_data_distribution_map_and_prediction_line(dataset: "np.ndarry", position: int, data_only=True,
+def draw_3d_data_distribution_map_and_prediction_line(dataset, position: int, data_only=True,
                                                       all_weights: list = None):
     """draw figure and show it on window"""
     if position == 1:
@@ -231,7 +230,7 @@ file_frame = tk.Frame(left_part)
 file_frame.pack()
 file_label = tk.Label(file_frame, text='File')
 file_label.pack(side=tk.LEFT)
-open_button = ttk.Button(file_frame, text='choose a File', command=select_file)
+open_button = tk.Button(file_frame, text='choose a File', command=select_file)
 open_button.pack(side=tk.LEFT)
 
 lr_frame = tk.Frame(left_part)

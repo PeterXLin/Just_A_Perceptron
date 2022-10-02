@@ -1,2 +1,2 @@
 # About this project
-This project use perceptron to classification problem   
+實作單層感知機並用來解決分類問題
